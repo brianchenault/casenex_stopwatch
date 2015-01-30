@@ -1,0 +1,58 @@
+html, body {
+    text-align: center;
+    margin: 0 auto;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#main {
+    min-width: 600px;
+}
+
+.display {
+    margin-top: 30px;
+    font-size: 4em;
+}
+
+.unit {
+    display: inline-block;
+}
+
+.buttons,
+#lapList {
+    margin-top: 30px;
+}
+
+.lap {
+    margin: 10px 0;
+}
+
+.lap > span {
+    margin-right: 20px;
+    font-weight: bold;
+}
+
+.button {
+    display :inline-block;
+    width: 100px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    -webkit-transition : border 100ms ease-out;
+    -moz-transition : border 100ms ease-out;
+    -o-transition : border 100ms ease-out;
+}
+
+.button:hover {
+    font-weight: bold;
+    border: 1px solid #000;
+}
+
+@media screen and (max-width: 600px) {
+    #main {
+        min-width: 0;
+    }
+    .display {
+        margin-top: 30px;
+        font-size: 2em;
+    }
+}
