@@ -1,103 +1,114 @@
-// admittedly all procedural and for that a bit yucky
-(function() {
-    // DOM
-    var resetEl = document.getElementById('reset');
-    var startEl = document.getElementById('start');
-    var stopEl = document.getElementById('stop');
-    var lapEl = document.getElementById('lap');
-    var millisecondsEl = document.getElementById('ms');
-    var secondsEl = document.getElementById('seconds');
-    var minutesEl = document.getElementById('minutes');
-    var hoursEl = document.getElementById('hours');
-    var lapListEl = document.getElementById('lapList');
+window.stopwatchApp = {
+    init: function() {
+        this.elements = {
+            resetEl: document.getElementById('reset'),
+            startEl: document.getElementById('start'),
+            stopEl: document.getElementById('stop'),
+            lapEl: document.getElementById('lap'),
+            millisecondsEl: document.getElementById('ms'),
+            secondsEl: document.getElementById('seconds'),
+            minutesEl: document.getElementById('minutes'),
+            hoursEl: document.getElementById('hours'),
+            lapListEl: document.getElementById('lapList')
+        };
 
-    // app stuff
-    var timerInterval;
-    var isRunning = false;
-    var isPaused = false;
-    var startTime = null;
-    var pauseTime = null;
-    var lapCounter = 0;
-    var timer = {
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        ms: 0
-    };
+        this.isRunning = false;
+        this.isPaused = false;
+        this.timerInterval = null;
+        this.startTime = null;
+        this.pauseTime = null;
+        this.lapCounter = 0;
+        this.timer = {
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            ms: 0
+        };
+
+        this.elements.lapEl.addEventListener('click', this.onLapClick.bind(this));
+        this.elements.startEl.addEventListener('click', this.onStartClick.bind(this));
+        this.elements.stopEl.addEventListener('click', this.onStopClick.bind(this));
+        this.elements.resetEl.addEventListener('click', this.onResetClick.bind(this));
+    },
 
     // ideally we would have a collection that is bound to DOM (or Stores/FLUX/React/props!)
-    //  and push to that collection instead of this fairly "dumb" route
-    var onLapClick = function() {
-        if (isRunning) {
-            lapCounter++;
+    // and push to that collection instead of this fairly "dumb" route
+    onLapClick: function() {
+        if (this.isRunning) {
+            this.lapCounter++;
             var newLap = document.createElement('div');
 
             newLap.className = 'lap';
-            // ugh, TEMPLATES
-            newLap.innerHTML = '<span>' + lapCounter + '</span>' + ensureLeadingZeros(timer.hours, 2) + ':' +
-            ensureLeadingZeros(timer.minutes, 2) + ':' +
-            ensureLeadingZeros(timer.seconds, 2) + ':' +
-            ensureLeadingZeros(timer.ms, 3);
+            // ugh, TEMPLATES - psyched for ES6 template strings
+            newLap.innerHTML = '<span>' + this.lapCounter + '</span>' + this.ensureLeadingZeros(this.timer.hours, 2) + ':' +
+            this.ensureLeadingZeros(this.timer.minutes, 2) + ':' +
+            this.ensureLeadingZeros(this.timer.seconds, 2) + ':' +
+            this.ensureLeadingZeros(this.timer.ms, 3);
 
-            lapListEl.insertBefore(newLap,  lapListEl.childNodes[0]);
+            this.elements.lapListEl.insertBefore(newLap,  this.elements.lapListEl.childNodes[0]);
         }
-    };
+    },
 
-    var onStartClick = function() {
-        if (!timerInterval) {
-            isRunning = true;
+    interval: function() {
+        // SHOULD HAVE THOUGHT OF THIS EARLIER WHEN MENTIONED IN INTERVIEW...DOH.
+        // Admittedly, Googled. Womp womp.
+        var elapsedTime = Date.now() - this.startTime;
+        this.timer.ms = parseInt(elapsedTime % 1000);
+        this.timer.seconds = parseInt((elapsedTime / 1000) % 60);
+        this.timer.minutes = parseInt((elapsedTime / (1000 * 60)) % 60);
+        this.timer.hours = parseInt((elapsedTime / (1000 * 60 * 60)) % 24);
 
-            if (!isPaused) {
-                startTime = Date.now();
+        this.elements.secondsEl.innerHTML = this.ensureLeadingZeros(this.timer.seconds, 2);
+        this.elements.minutesEl.innerHTML = this.ensureLeadingZeros(this.timer.minutes, 2);
+        this.elements.hoursEl.innerHTML = this.ensureLeadingZeros(this.timer.hours, 2);
+        this.elements.millisecondsEl.innerHTML = this.ensureLeadingZeros(this.timer.ms, 3);
+    },
+
+    onStartClick: function() {
+        // if no interval loop running
+        if (!this.timerInterval) {
+            this.isRunning = true;
+
+            if (!this.isPaused) {
+                this.startTime = Date.now();
             } else {
-                startTime = Date.now() - pauseTime;
-                isPaused = false;
+                // need to factor in the time that it was paused
+                this.startTime = Date.now() - this.pauseTime;
+                this.isPaused = false;
             }
 
-            timerInterval = setInterval(function() {
-                // SHOULD HAVE THOUGHT OF THIS EARLIER WHEN MENTIONED IN INTERVIEW...DOH.
-                // Admittedly, Googled. Womp womp.
-                var elapsedTime = Date.now() - startTime;
-                timer.ms = parseInt((elapsedTime % 1000)/10);
-                timer.seconds = parseInt((elapsedTime / 1000) % 60);
-                timer.minutes = parseInt((elapsedTime / (1000 * 60)) % 60);
-                timer.hours = parseInt((elapsedTime / (1000 * 60 * 60)) % 24);
-
-                secondsEl.innerHTML = ensureLeadingZeros(timer.seconds, 2);
-                minutesEl.innerHTML = ensureLeadingZeros(timer.minutes, 2);
-                hoursEl.innerHTML = ensureLeadingZeros(timer.hours, 2);
-                millisecondsEl.innerHTML = ensureLeadingZeros(timer.ms, 3);
-            }, 10);
+            this.timerInterval = setInterval(this.interval.bind(this), 10);
         }
-    };
+    },
 
-    var onResetClick = function() {
-        clearInterval(timerInterval);
+    onResetClick: function() {
+        clearInterval(this.timerInterval);
 
-        timerInterval = null;
-        startTime = null;
-        isRunning = false;
-        lapCounter = 0;
+        this.timerInterval = null;
+        this.startTime = null;
+        this.isRunning = false;
+        this.lapCounter = 0;
 
-        hoursEl.innerHTML = '00';
-        minutesEl.innerHTML = '00';
-        secondsEl.innerHTML = '00';
-        millisecondsEl.innerHTML = '000';
-        lapListEl.innerHTML = '';
-    };
+        this.elements.hoursEl.innerHTML = '00';
+        this.elements.minutesEl.innerHTML = '00';
+        this.elements.secondsEl.innerHTML = '00';
+        this.elements.millisecondsEl.innerHTML = '000';
+        this.elements.lapListEl.innerHTML = '';
+    },
 
-    var onStopClick = function() {
-        if (isRunning) {
-            clearInterval(timerInterval);
+    onStopClick: function() {
+        // if already stopped, do nothing
+        if (this.isRunning) {
+            clearInterval(this.timerInterval);
 
-            timerInterval = null;
-            isRunning = false;
-            isPaused = true;
-            pauseTime = Date.now() - startTime;
+            this.timerInterval = null;
+            this.isRunning = false;
+            this.isPaused = true;
+            this.pauseTime = Date.now() - this.startTime;
         }
-    };
+    },
 
-    function ensureLeadingZeros(num, numSize) {
+    ensureLeadingZeros: function(num, numSize) {
         num = num.toString();
 
         while (num.length < numSize) {
@@ -106,10 +117,6 @@
 
         return num;
     }
+};
 
-    lapEl.addEventListener('click', onLapClick);
-    startEl.addEventListener('click', onStartClick);
-    stopEl.addEventListener('click', onStopClick);
-    resetEl.addEventListener('click', onResetClick);
-
-})(); // IIFE to keep global scope clear
+window.stopwatchApp.init();
